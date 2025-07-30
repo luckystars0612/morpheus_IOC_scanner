@@ -1,0 +1,17 @@
+Version History Logs -> Installation Type : Fortress Edition 
+
+UPDATE STATUS FOR - https://github.com/Neo23x0/signature-base.git 
+c43cdcca35c516f078b25eeb6d5849ecb9fc66f0	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/reversinglabs/reversinglabs-yara-rules (No Master or Main Branch Found) 
+943f35fde8c30d8122b26783911213f8994cbf9a	refs/heads/develop
+
+UPDATE STATUS FOR - https://github.com/airbnb/binaryalert 
+a9c0f06affc35e1f8e45bb77f835b92350c68a0b	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/HydraDragonAntivirus/HydraDragonAntivirus 
+d9f765402c163a5459d7dfeb5121051ce19ce09f	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/malpedia/signator-rules 
+6558c417dcf07146b1309b6acde6be0aa96dea10	refs/heads/main
+

@@ -23,6 +23,7 @@ import subprocess
 import sys
 from time import sleep
 from modules import ascii_art
+import yaml
 
 ABSOLUTE_PATH_FLAG = False
 PROGRAM_MAIN_PATH = ""
@@ -334,27 +335,29 @@ If this file or the 'version_tracking' folder is accidentally deleted, please ru
     
 # Handpicked from a large repository : https://github.com/InQuest/awesome-yara?tab=readme-ov-file
 # All links here will be reflected in the update python file
+
 def github_links_yara_rules():
-    rule_links = [
-        [
-            "https://github.com/Neo23x0/signature-base.git", 
-            "https://github.com/reversinglabs/reversinglabs-yara-rules",
-            "https://github.com/airbnb/binaryalert",
-            
-            # Very Large Repos
-            "https://github.com/HydraDragonAntivirus/HydraDragonAntivirus",
-            "https://github.com/malpedia/signator-rules"
-        ],
-        
-        [
-            # Light Repos
-            "https://github.com/Neo23x0/signature-base.git", 
-            "https://github.com/reversinglabs/reversinglabs-yara-rules",
-            "https://github.com/airbnb/binaryalert",
-        ]
-    ]
-    
-    return rule_links
+    """
+    Read predefined yara repository lists to collect lastest rule
+    ex:
+    {'NanoShield': ['https://github.com/Neo23x0/signature-base.git', 'https://github.com/reversinglabs/reversinglabs-yara-rules', 'https://github.com/airbnb/binaryalert'], 'Fortress': ['https://github.com/Neo23x0/signature-base.git', 'https://github.com/reversinglabs/reversinglabs-yara-rules', 'https://github.com/airbnb/binaryalert', 'https://github.com/HydraDragonAntivirus/HydraDragonAntivirus', 'https://github.com/malpedia/signator-rules']}
+    """
+    try:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(current_dir, 'yara.yaml')
+
+        with open(file_path, 'r') as f:
+            data = yaml.safe_load(f)
+            if not isinstance(data, dict):
+                raise ValueError("YAML file does not contain a valid dictionary structure.")
+            return [data['Fortress'],data['NanoShield']]
+    except FileNotFoundError:
+        print("Error: 'yara.yaml' file not found.")
+    except yaml.YAMLError as e:
+        print(f"YAML parsing error: {e}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+    return {}
 
 def main():
     # Display friendly banner and check required dependencies
