@@ -141,7 +141,8 @@ def default_yara_scan(file_path, pdf_flag):
     converted_output = format_yara_output(yara_matches)
     
     if pdf_flag:
-        generate_pdf_report(converted_output)
+        file_name = os.path.basename(file_path)
+        generate_pdf_report(file_name,converted_output)
     
     print("\n")
     custom_message("AI verdict", "(Verify independently)")
@@ -210,8 +211,8 @@ def generate_ai_verdict(yara_match_results):
     return None
 
 # Generate PDF report
-def generate_pdf_report(yara_results):
-    pdf_base_instance = analysis_report.ReportOutput(yara_results)
+def generate_pdf_report(file_name,yara_results):
+    pdf_base_instance = analysis_report.ReportOutput(file_name,yara_results)
     creation_result = pdf_base_instance.pdf_main_content()
     if isinstance(creation_result, str) and "Error" in creation_result:
         print(colored(f"[-] Skipped PDF Creation Due to Error - {creation_result}", "red"))

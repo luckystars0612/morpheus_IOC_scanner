@@ -28,7 +28,7 @@ import os
 from typing import Union
 
 class ReportOutput:
-    def __init__(self, yaraMatches: dict = {}) -> None:
+    def __init__(self, file_name: str ,yaraMatches: dict = {}) -> None:
         # User Values
         self.yaraMatches = yaraMatches
         
@@ -37,7 +37,8 @@ class ReportOutput:
 
         # Setup Required Variables
         self.logo_path = self.setup_logo_path()
-        self.file_name = self.setup_file_name()
+        self.report_dir = os.path.join(os.getcwd(), "reports",self.current_timestamp)
+        self.file_name = self.setup_file_name(file_name)
 
     ### SETUP ###
     # Define Logo - Not critical if not found
@@ -47,13 +48,17 @@ class ReportOutput:
         except:
             return None
 
-    def setup_file_name(self) -> str:
-        filename = f"output_{self.current_timestamp}.pdf"
+    def setup_file_name(self,file_name) -> str:
+        # Ensure the report directory exists
+        if not os.path.exists(self.report_dir):
+            os.makedirs(self.report_dir)
+
+        filename = os.path.join(self.report_dir,f"{file_name}_{self.current_timestamp}.pdf")
         
         # Ensure there is no name conflict
         while os.path.exists(filename): 
             generated_id = str(uuid.uuid4())[:3]
-            filename = f"output_{self.current_timestamp}_{generated_id}.pdf"
+            filename =  os.path.join(self.report_dir,f"{file_name}_{self.current_timestamp}_{generated_id}.pdf")
         
         return filename
 
