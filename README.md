@@ -39,6 +39,8 @@
 
 ---
 
+***Note:This repository is forked from [morpheus_IOC_scanner official](https://github.com/phantom0004/morpheus_IOC_scanner). Just add some features for directory scan and command line params instead of interaction***
+
 **Introducing Morpheus IOC Scanner**—a cutting-edge solution for detecting and analyzing malicious files, including ransomware and Indicators of Compromise (IOCs). Built with meticulous precision, Morpheus fuses custom-built rules and enterprise-grade YARA integrations, enabling comprehensive file insights and robust threat detection. Engineered for modern cybersecurity challenges, Morpheus helps you stay ahead of emerging threats with confidence.
 
 <p align="center">
@@ -137,8 +139,13 @@ To get started with **Morpheus IOC Scanner**, follow these steps:
 
 3. Once setup is complete, you can run the main file:
     ```python
-    python3 morpheus_scanner.py
+    python3 morpheus_scan_v2.py --yara-scan --vt-scan -d "path/to/directory" --pdf
     ```
+    > --yara-scan: for yara scanning
+    > --vt-scan: for virus total scanning
+    > -d: directory need to scan
+    > --pdf: export scan result in pdf format
+    ***Note that --yara-scan and --vt-scan can be used seperately or combined with each other, --pdf is optional***
 
 ### Updating the YARA Database
 
@@ -147,6 +154,8 @@ Periodically run the `database_updater.py` script to fetch the latest YARA rules
 ```bash
 python3 database_updater.py
 ```
+
+***Note that you can add more yara repositories in yara.yaml, it will automatically load and update the latest yara rules from these repository***
 
 If you wish to switch to a more comprehensive or lighter YARA ruleset, such as the Fortress Edition or Nano Edition, simply run the `setup.py` script again. This will handle the deletion of old files and automatically set up the new ruleset for you.
 
