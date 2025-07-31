@@ -210,22 +210,13 @@ def create_yara_directories():
     os.chdir(os.path.join(PROGRAM_MAIN_PATH, "yara_rules"))
     
     # Go to main rule directory
-    if os.listdir("external_yara_rules"):
-        print("[+] Data found in 'external_yara_rules'. Continuing will delete all of its contents for new ones.")
-        try:
-            input("\nPress any key to continue, or CTRL+C to Cancel Setup ... ")
-            print("Loading Setup ...")
-            clear_screen()
-        except KeyboardInterrupt:
-            sys.exit("\nProgram Aborted by User.")
+    try:
+        print("Deleting 'external_yara_rules' folder for default rules . . .")
+        shutil.rmtree("external_yara_rules")
+    except PermissionError:
+        delete_file("external_yara_rules")
         
-        # Delete Directory
-        try:
-            shutil.rmtree("external_yara_rules")
-        except PermissionError:
-            delete_file("external_yara_rules")
-          
-        create_and_traverse_directory("external_yara_rules")
+    create_and_traverse_directory("external_yara_rules")
 
 def find_and_extract_yara_files():
     main_folders = os.listdir()  # Get the main folders (these won't be deleted)
@@ -370,10 +361,13 @@ def main():
 
     # Create main folders
     create_yara_directories()
+    dir = os.getcwd()  # Get current working directory
+    print(dir)
+    print("---------")
 
     # Identify installation type
     choice = installation_guide()
-    clear_screen()
+    #clear_screen()
 
     print("Please stand by . . . Downloading all required yara rules.")
     github_links = github_links_yara_rules()
