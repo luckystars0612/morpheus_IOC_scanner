@@ -1,9 +1,11 @@
-
 import os
 import argparse
-from time import sleep
+from time import sleep, time
 from datetime import datetime
 from zipfile import ZipFile 
+import threading
+import configparser
+from queue import Queue
 
 try:
     from termcolor import colored
@@ -21,6 +23,11 @@ except ModuleNotFoundError:
 
 DEFAULT_RULE_PATH = os.path.join("yara_rules", "external_yara_rules", "default_built_in_rules")
 
+# Rate limiting for VirusTotal API
+API_CALLS = {}  # Tracks calls per API key
+API_CALLS_LOCK = threading.Lock()
+LAST_RESET = time()
+
 # Program Intro Banner
 def startup_banner():
     banner = colored(ascii_art.morpheus_banner(), "red", attrs=["bold"])  
@@ -33,10 +40,9 @@ Use command-line arguments to perform scans:
   --vt-scan                 Perform VirusTotal scan
   -f, --file <path>         Path to a single file to scan
   -d, --directory <path>    Path to a directory to scan
-  --api-key <key>           VirusTotal API key (required for vt-scan)
   --url <url>               URL to scan (vt-scan only)
   --hash-algo <md5|sha1|sha256>  Hashing algorithm for file (default: sha256)
-  --pdf                     Generate PDF report (yara-scan only)
+  --pdf                     Generate PDF report (yara-scan or vt-scan for malicious samples)
 """
     print(banner + options)
 
@@ -53,29 +59,62 @@ def menu_switch(choice):
     
     print("\n")
 
+# Load API keys from config file
+def load_api_keys():
+    config = configparser.ConfigParser()
+    config.read('api_config.ini')
+    try:
+        keys = config['VirusTotal']['api_keys'].split(',')
+        return [key.strip() for key in keys if key.strip()]
+    except KeyError:
+        print(colored("[-] Error: 'api_config.ini' missing or invalid. Please create with [VirusTotal] section and 'api_keys' field.", "red"))
+        exit(1)
+
+# Rate limiting check
+def check_rate_limit(api_key):
+    global API_CALLS, LAST_RESET
+    with API_CALLS_LOCK:
+        current_time = time()
+        # Reset counts every minute
+        if current_time - LAST_RESET >= 60:
+            API_CALLS.clear()
+            LAST_RESET = current_time
+        
+        API_CALLS.setdefault(api_key, 0)
+        if API_CALLS[api_key] >= 4:
+            sleep_time = 60 - (current_time - LAST_RESET)
+            if sleep_time > 0:
+                print(colored(f"[-] Rate limit reached for API key {api_key}. Waiting {sleep_time:.2f} seconds.", "yellow"))
+                sleep(sleep_time)
+                API_CALLS.clear()
+                LAST_RESET = time()
+                API_CALLS[api_key] = 0
+        API_CALLS[api_key] += 1
+
 # Start VirusTotal scan
 def virus_total_scan(api_key, data, choice, hash_algo="sha256"):
+    check_rate_limit(api_key)
     virus_total_object = virus_total.VirusTotalAPI(choice, data, api_key)
     client_object, status_message = virus_total_object.connect_to_endpoint()
     if status_message == "api_fail":
         print(colored("API Error: The 'vt' library encountered an issue. Please ensure your API key is valid.", "red"))
-        return False
+        return False, None
     elif status_message == "general_fail":
         print(colored("General Error: A failure occurred while connecting to the API.", "red"))
-        return False
+        return False, None
     
     virus_total_object.client_obj = client_object
     api_request_string = virus_total_object.craft_api_request()
     output, function_status = virus_total_object.send_api_request_using_vt(api_request_string)
     if function_status == "api_fail":
         print(colored(virus_total_object.parse_API_error(output), "red"))
-        return False
+        return False, None
     elif function_status == "general_fail":
         print(colored(output, "red"))
-        return False
+        return False, None
     
-    virus_total_object.parse_API_output(output)
-    return True
+    results = virus_total_object.parse_API_output(output)
+    return True, results
 
 # Hash file for VirusTotal scan
 def hash_file(path, hash_algo="sha256"):
@@ -142,7 +181,7 @@ def default_yara_scan(file_path, pdf_flag):
     
     if pdf_flag:
         file_name = os.path.basename(file_path)
-        generate_pdf_report(file_name,converted_output)
+        generate_pdf_report(file_name, converted_output)
     
     print("\n")
     custom_message("AI verdict", "(Verify independently)")
@@ -172,47 +211,55 @@ def scan_directory(dir_path, pdf_flag):
                 continue
     return success
 
-# VirusTotal scan for a directory
-def scan_directory_vt(dir_path, api_key, hash_algo):
+# VirusTotal scan for a directory with multiple API keys
+def scan_directory_vt(dir_path, api_keys, hash_algo, pdf_flag):
     if not os.path.isdir(dir_path):
         print(colored(f"[-] The directory '{dir_path}' does not exist! Skipping.", "red"))
         return False
     
     print(colored(f"Scanning directory with VirusTotal: {dir_path}", "yellow"))
     success = False
+    file_queue = Queue()
+    
+    # Collect all files
     for root, _, files in os.walk(dir_path):
         for file_name in files:
-            file_path = os.path.join(root, file_name)
-            print(colored(f"\nScanning file: {file_path}", "cyan"))
+            file_queue.put(os.path.join(root, file_name))
+    
+    def worker(api_key):
+        while not file_queue.empty():
             try:
+                file_path = file_queue.get()
+                print(colored(f"\nScanning file: {file_path} with API key {api_key[:4]}...", "cyan"))
                 data = hash_file(file_path, hash_algo)
                 if data and parse_hash_output(data):
                     print(colored(f"\n✔ Successfully hashed file -> {data}", "green"))
                     print(f"{'-' * 100}\n")
-                    if virus_total_scan(api_key, data, "files", hash_algo):
+                    scan_success, results = virus_total_scan(api_key, data, "files", hash_algo)
+                    if scan_success:
                         success = True
+                        if pdf_flag and results and results.get('verdict') in ["Deemed Likely Malicious", "Deemed Possibly Malicious"]:
+                            file_name = os.path.basename(file_path)
+                            generate_pdf_report(file_name, results, is_vt=True)
             except Exception as e:
                 print(colored(f"[-] Error scanning file '{file_path}': {str(e)}", "red"))
-                continue
+            finally:
+                file_queue.task_done()
+    
+    threads = []
+    for api_key in api_keys:
+        t = threading.Thread(target=worker, args=(api_key,))
+        t.start()
+        threads.append(t)
+    
+    for t in threads:
+        t.join()
+    
     return success
 
-# Send API request and return AI verdict
-def generate_ai_verdict(yara_match_results):
-    ai_verdict_object = ai_verdict.AIVerdict(yara_match_results)
-    json_payload = ai_verdict_object.generate_api_request()
-    request_output, request_status = ai_verdict_object.send_api_request(json_payload) 
-    if request_status == "fail":
-        return request_output
-    
-    if ai_verdict_object.supports_advanced_formatting():
-        ai_verdict_object.format_string_to_markdown(request_output)
-    else:
-        print(request_output.strip().replace("```", "").replace("**", ""))
-    return None
-
 # Generate PDF report
-def generate_pdf_report(file_name,yara_results):
-    pdf_base_instance = analysis_report.ReportOutput(file_name,yara_results)
+def generate_pdf_report(file_name, results, is_vt=False):
+    pdf_base_instance = analysis_report.ReportOutput(file_name, results)
     creation_result = pdf_base_instance.pdf_main_content()
     if isinstance(creation_result, str) and "Error" in creation_result:
         print(colored(f"[-] Skipped PDF Creation Due to Error - {creation_result}", "red"))
@@ -233,6 +280,20 @@ def format_yara_output(yara_results):
             converted_output["Malware Analysis YARA Output"].append(match)
     
     return converted_output
+
+# Send API request and return AI verdict
+def generate_ai_verdict(yara_match_results):
+    ai_verdict_object = ai_verdict.AIVerdict(yara_match_results)
+    json_payload = ai_verdict_object.generate_api_request()
+    request_output, request_status = ai_verdict_object.send_api_request(json_payload) 
+    if request_status == "fail":
+        return request_output
+    
+    if ai_verdict_object.supports_advanced_formatting():
+        ai_verdict_object.format_string_to_markdown(request_output)
+    else:
+        print(request_output.strip().replace("```", "").replace("**", ""))
+    return None
 
 # Handle PE file analysis
 def pe_file_analysis(file_path):
@@ -302,19 +363,15 @@ def parse_arguments():
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-f", "--file", help="Path to a single file to scan")
     group.add_argument("-d", "--directory", help="Path to a directory to scan")
-    parser.add_argument("--api-key", help="VirusTotal API key (required for vt-scan)")
     parser.add_argument("--url", help="URL to scan (vt-scan only)")
     parser.add_argument("--hash-algo", choices=["md5", "sha1", "sha256"], default="sha256", help="Hashing algorithm for file (default: sha256)")
-    parser.add_argument("--pdf", action="store_true", help="Generate PDF report (yara-scan only)")
+    parser.add_argument("--pdf", action="store_true", help="Generate PDF report (yara-scan or vt-scan for malicious samples)")
     
     args = parser.parse_args()
     
     if not (args.yara_scan or args.vt_scan):
         startup_banner()
         parser.error("At least one of --yara-scan or --vt-scan must be specified")
-    
-    if args.vt_scan and not args.api_key and not args.url:
-        parser.error("--api-key is required for vt-scan unless --url is provided")
     
     if (args.file or args.directory) and args.url:
         parser.error("--url cannot be combined with --file or --directory")
@@ -351,22 +408,33 @@ def handle_menu_arguments():
     
     # Perform VirusTotal scan
     if args.vt_scan:
+        api_keys = load_api_keys()
+        if not api_keys:
+            print(colored("[-] No valid API keys found in 'api_config.ini'. Aborting VirusTotal scan.", "red"))
+            return
+        
         menu_switch("virus_total")
         if args.url:
             print(colored(f"\n✔ Successfully added URL -> {args.url}", "green"))
             print(f"{'-' * 100}\n")
-            virus_total_scan(args.api_key, args.url, "urls", args.hash_algo)
+            # Use the first API key for URL scans
+            scan_success, results = virus_total_scan(api_keys[0], args.url, "urls", args.hash_algo)
+            if scan_success and args.pdf and results and results.get('verdict') in ["Deemed Likely Malicious", "Deemed Possibly Malicious"]:
+                generate_pdf_report("url_scan", results, is_vt=True)
         elif args.file:
             if os.path.isfile(args.file):
                 data = hash_file(args.file, args.hash_algo)
                 if data and parse_hash_output(data):
                     print(colored(f"\n✔ Successfully hashed file -> {data}", "green"))
                     print(f"{'-' * 100}\n")
-                    virus_total_scan(args.api_key, data, "files", args.hash_algo)
+                    scan_success, results = virus_total_scan(api_keys[0], data, "files", args.hash_algo)
+                    if scan_success and args.pdf and results and results.get('verdict') in ["Deemed Likely Malicious", "Deemed Possibly Malicious"]:
+                        file_name = os.path.basename(args.file)
+                        generate_pdf_report(file_name, results, is_vt=True)
             else:
                 print(colored(f"[-] The file '{args.file}' does not exist! Aborting VirusTotal scan.", "red"))
         elif args.directory:
-            scan_directory_vt(args.directory, args.api_key, args.hash_algo)
+            scan_directory_vt(args.directory, api_keys, args.hash_algo, args.pdf)
         else:
             print(colored("[-] No file, directory, or URL specified for VirusTotal scan!", "red"))
 

@@ -13,10 +13,6 @@ Features:
 - Retrieve crowdsourced intelligence, including YARA rules and threat mappings.
 - Classify threats using popular labels and categories.
 - Parse and display detailed analysis results.
-
-Usage:
-- Use this module to interact with VirusTotal's API for threat analysis.
-- Retrieve and display insights to enhance malware detection workflows.
 """
 
 try:
@@ -32,7 +28,7 @@ import json
 import os
 
 class VirusTotalAPI:
-    def __init__ (self, choice="1", data="placeholder", API_KEY="", client_obj=""):
+    def __init__(self, choice="1", data="placeholder", API_KEY="", client_obj=""):
         self.API_KEY = API_KEY
         self.data = data
         self.choice = choice
@@ -42,7 +38,7 @@ class VirusTotalAPI:
     def connect_to_endpoint(self):
         try:
             conn_object, status = vt.Client(self.API_KEY), "success"
-            print(colored("✔ Connected to VirusTotal API Successfully \n", "green", attrs=["bold"]))
+            print(colored(f"✔ Connected to VirusTotal API Successfully with key {self.API_KEY[:4]}...", "green", attrs=["bold"]))
             return conn_object, status
         
         # VT library Related Exceptions
@@ -51,10 +47,10 @@ class VirusTotalAPI:
             os.system("pip install --upgrade vt-py") # Can fix common VT library issues
             try:
                 conn_object = vt.Client(self.API_KEY)
-                print(colored("✔ Fix Completed - API Connected Successfully \n", "green", attrs=["bold"]))
+                print(colored(f"✔ Fix Completed - API Connected Successfully with key {self.API_KEY[:4]}...", "green", attrs=["bold"]))
                 return conn_object, "success"
             except:
-                print(colored("✘ Fix Failed - Failed to reconnect to VirusTotal API \n", "red", attrs=["bold"]))
+                print(colored(f"✘ Fix Failed - Failed to reconnect to VirusTotal API with key {self.API_KEY[:4]}...", "red", attrs=["bold"]))
                 return vt_error, "api_fail"
         
         # General Exceptions    
@@ -119,7 +115,7 @@ class VirusTotalAPI:
         elif "NotFoundError" in error_message:
             return "The content you are looking for cannot be found or has not been scanned yet in the VirusTotal database. Please submit a Sample."
         elif "Wrong API key" in error_message:
-            return "Incorrect API Key entered. Your API key is unknown to VirusTotal. Please enure you copied the value well, and ensure you did not skip the balance."
+            return "Incorrect API Key entered. Your API key is unknown to VirusTotal. Please ensure you copied the value correctly."
         else:
             return f"An unknown error occurred: {error_message}"
 
@@ -140,7 +136,7 @@ class VirusTotalAPI:
         else:
             return colored(f"Good Scoring (Score: {score_value})", 'green')
     
-    # Hash file with any 3 algorithims 
+    # Hash file with any 3 algorithms 
     @staticmethod    
     def hash_file(file_data, hash_algo="sha256"):        
         if not isinstance(file_data, bytes):
@@ -178,11 +174,21 @@ class VirusTotalAPI:
                 malicious_count += 1
         
         if malicious_count < 30:
-            print(f"[+] Final Verdict : {colored('Deemed Safe', 'green')} (Marked Malicious by less than 30% of vendors)")
-        elif malicious_count in range(30,80):
-            print(f"[+] Final Verdict : {colored('Deemed Possibly Malicious', 'yellow')} (Marked Malicious by 30% to 70% of vendors)")
+            verdict = "Deemed Safe"
+            print(f"[+] Final Verdict : {colored(verdict, 'green')} (Marked Malicious by less than 30% of vendors)")
+            return verdict
+        elif malicious_count in range(30, 80):
+            verdict = "Deemed Possibly Malicious"
+            print(f"[+] Final Verdict : {colored(verdict, 'yellow')} (Marked Malicious by 30% to 70% of vendors)")
+            return verdict
         else:
-            print(f"[+] Final Verdict : ({colored('Deemed Likely Malicious', 'red')} (Marked Malicious by over 80% of vendors)")
+            verdict = "Deemed Likely Malicious"
+            print(f"[+] Final Verdict : {colored(verdict, 'red')} (Marked Malicious by over 80% of vendors)")
+            return verdict
+
+    # Get verdict for external use
+    def get_verdict(self, last_analysis_result):
+        return self.final_verdict(last_analysis_result)
 
     # Classify threat based on categories, labels and threat names
     @staticmethod
@@ -191,10 +197,10 @@ class VirusTotalAPI:
 
         if not threat_output:
             print("No Threat Intel Found.")
-            return
+            return categories, labels, threat_names
         
-        for index , (key, value) in enumerate(threat_output.items()):
-            if index >= 5 : break
+        for index, (key, value) in enumerate(threat_output.items()):
+            if index >= 5: break
             if key == "suggested_threat_label":
                 labels.add(value)
             elif key == "popular_threat_name" and isinstance(value, list):
@@ -203,12 +209,13 @@ class VirusTotalAPI:
             elif key == "popular_threat_category" and isinstance(value, list):
                 for item in value:
                     categories.add(item.get("value", "Unknown"))
-
+        
         print(f"[+] Categories       : {colored(', '.join(categories), attrs=['bold'])}")
         print(f"[+] Labels           : {colored(', '.join(labels).replace('/', '', ''), attrs=['bold'])}")
         print(f"[+] Threat Names     : {colored(', '.join(threat_names), attrs=['bold'])}")
+        return categories, labels, threat_names
     
-    # Get signature rule information from several API's
+    # Get signature rule information from several APIs
     @staticmethod        
     def define_ruleset(ruleset_output):
         rule_id, rule_name, description, author, source = [], [], [], [], []
@@ -216,7 +223,7 @@ class VirusTotalAPI:
         rules = []
         if not ruleset_output:
             print("[-] No Rules Found.")
-            return
+            return []
         
         for item in ruleset_output:
             rules.append(item)
@@ -240,71 +247,92 @@ class VirusTotalAPI:
             print(f"      - Description    : {description[element]}")
             print(f"      - Author         : {author[element]}")
             print(f"      - Source         : {source[element]}")
+        return rules
     
     # Main Function        
     def parse_API_output(self, output):
         choice = self.choice
+        results = {}
             
         print("Scan Overview: ")
         if choice == "files":
+            results["file_size"] = f"{output.size} bytes"
+            results["sha256"] = output.sha256
+            results["file_type"] = output.type_tag
             print(f"[+] File Size        : {output.size} bytes")
             print(f"[+] File SHA256 Hash : {output.sha256}")
             print(f"[+] File Type        : {output.type_tag}")
             
             print("\nDetailed Crowdsourced Output:")     
             try:  
-                self.define_ruleset(output.crowdsourced_yara_results)
+                results["yara_rules"] = self.define_ruleset(output.crowdsourced_yara_results)
             except:
                 print("[-] No Yara Rules Found.")
+                results["yara_rules"] = []
             
             try:
-                self.classify_threat(output.popular_threat_classification)
+                results["threat_classification"] = self.classify_threat(output.popular_threat_classification)
             except:
                 print("[-] No Threat Classifications Found.")
-        elif choice == "  ":
+                results["threat_classification"] = ([], [], [])
+        elif choice == "urls":
             self.rescan_url() # Submit the URL for re-analysis to ensure an output
+            results["times_submitted"] = output.times_submitted
             print(f"[+] Times URL Got Scanned : {output.times_submitted}")
             
             print("\nTotal Community Votes:")
-            print(f"[+] Malicious Rating  : Score of {output.total_votes.get('malicious', 'None Found')}")
-            print(f"[+] Harmless  Rating  : Score of {output.total_votes.get('harmless', 'None Found')}")
+            results["malicious_votes"] = output.total_votes.get('malicious', 'None Found')
+            results["harmless_votes"] = output.total_votes.get('harmless', 'None Found')
+            print(f"[+] Malicious Rating  : Score of {results['malicious_votes']}")
+            print(f"[+] Harmless  Rating  : Score of {results['harmless_votes']}")
 
-        print(f"\n{choice.capitalize()} Community Repudation: ")
+        print(f"\n{choice.capitalize()} Community Reputation: ")
         score = self.score_verdict(output.reputation)
+        results["reputation"] = score or "No Score Found."
         if score:
-            print(f"[+] Identified as : {self.score_verdict(output.reputation)}")
+            print(f"[+] Identified as : {score}")
         else:
             print("[-] No Score Found.")
         
         print("\nSummary of the most recent analysis:")
+        results["analysis_stats"] = output.last_analysis_stats
         for key, value in output.last_analysis_stats.items():
             print(f"[+] {key.capitalize():<20} : {'None' if value == 0 else value} found")
             
         if choice == "files":
             print("\nMITRE ATT&CK Technique's Identified (Displaying Max 15):")
-            self.extract_behaviour_techniques_of_file()
+            results["mitre_techniques"] = self.extract_behaviour_techniques_of_file()
         elif choice == "urls":
             print("\nAlternative Names Found:")
-            self.find_alternative_names()
+            results["alternative_names"] = self.find_alternative_names()
 
         print("\nDetailed results from individual antivirus engines:")    
         av_results = output.last_analysis_results
+        results["av_results"] = []
         for index, (key, value) in enumerate(av_results.items()):
             if index >= 15: break
             category = value.get("category", "Uncategorised")
-            print(f"[+] Vendor : {key.capitalize():<20} -> Category : {colored('Malicious', 'red') if category == 'malicious' else category.capitalize()}\tType : {value.get('result'.capitalize(), 'Unknown')}")
+            result_entry = {
+                "vendor": key.capitalize(),
+                "category": "Malicious" if category == "malicious" else category.capitalize(),
+                "type": value.get("result", "Unknown")
+            }
+            results["av_results"].append(result_entry)
+            print(f"[+] Vendor : {key.capitalize():<20} -> Category : {colored('Malicious', 'red') if category == 'malicious' else category.capitalize()}\tType : {value.get('result', 'Unknown')}")
         
         print("\n[+] User Comments (Verify Thoroughly): ")
-        self.extract_comments()
+        results["comments"] = self.extract_comments()
         
         print(f"Final Scan Verdict {colored('(Please do not consider the below as definitive)', 'yellow')}:")
-        self.final_verdict(av_results)
+        results["verdict"] = self.get_verdict(av_results)
+        
+        return results
 
     # Send and get response
     def send_api_request_using_requests(self, api_param):
         API_KEY = self.API_KEY
         
-        # Using v3 as v2 is depreciated
+        # Using v3 as v2 is deprecated
         url = f"https://www.virustotal.com/api/v3/{api_param}"
         headers = {
             "accept": "application/json",
@@ -325,24 +353,23 @@ class VirusTotalAPI:
         output = self.send_api_request_using_requests(f"{choice}/{data}/comments?limit=3")
         if output == "not_status_200" or output is None:
             print("[-] Unable to extract user comments, The community may have submitted nothing.\n")
-            return
+            return []
         
         try:
-            comment_number = 1
+            comments = []
             for elements in range(len(output.get("data", ""))):
-                comments = ((output.get("data", [])[elements]).get("attributes", "").get("text", ""))
-                if len(comments) > 700 : continue # Prevent Screen Clutter
+                comment = ((output.get("data", [])[elements]).get("attributes", "").get("text", ""))
+                if len(comment) > 700: continue # Prevent Screen Clutter
                 
                 # Data Extracted
-                comments = comments.replace("[/b]", "").replace("[b]", "")
-                
-                print("\t",colored(f'> Comment {comment_number} :', attrs=['bold']))
-                print("\n".join([f"\t{line}" for line in comments.splitlines()]))
+                comment = comment.replace("[/b]", "").replace("[b]", "")
+                comments.append(comment)
+                print("\t", colored(f'> Comment {elements + 1} :', attrs=['bold']))
+                print("\n".join([f"\t{line}" for line in comment.splitlines()]))
                 print() # Add spacing
-                
-                comment_number += 1
+            return comments
         except (KeyError, TypeError):
-            return
+            return []
 
     # Extract behaviour analysis information
     def extract_behaviour_techniques_of_file(self):    
@@ -351,19 +378,22 @@ class VirusTotalAPI:
         output = self.send_api_request_using_requests(f"files/{data}/behaviour_summary")
         if output == "not_status_200" or output is None:
             print("[-] Unable to extract file behaviour data.")
-            return
+            return []
         
         try:
             techniques = output.get("data", "").get("attack_techniques", [])    
         except (KeyError, TypeError):
             print("[-] Unable to extract MITRE Techniques")
-            return
+            return []
         
+        results = []
         for index, technique in enumerate(techniques):   
             if index == 15: break
             
-            desciption = (techniques.get(technique, [])[0].get("description", "None Found")).capitalize()
-            print(f"[+] Technique ID : {technique:<15} | Description : {desciption}")
+            description = (techniques.get(technique, [])[0].get("description", "None Found")).capitalize()
+            print(f"[+] Technique ID : {technique:<15} | Description : {description}")
+            results.append({"technique_id": technique, "description": description})
+        return results
 
     # Rescan URL if any fail arises
     def rescan_url(self):
@@ -377,7 +407,7 @@ class VirusTotalAPI:
     def extract_domain(data):
         if "https" in data or "http" in data:
             data = urlparse(data).netloc
-            if data.startswith("www.") : data = data[4:]
+            if data.startswith("www."): data = data[4:]
         
         return data
 
@@ -388,7 +418,7 @@ class VirusTotalAPI:
         output = self.send_api_request_using_requests(f"domains/{data}")
         if output == "not_status_200" or output is None:
             print("[-] Unable to extract domain information.")
-            return
+            return []
         
         # Extracting the subject alternative names from the last_https_certificate
         try:
@@ -396,11 +426,14 @@ class VirusTotalAPI:
             subject_alternative_names = last_https_certificate.get("extensions", {}).get("subject_alternative_name", [])
         except (KeyError, TypeError):
             print("[-] No subject alternative names found.")
-            return
+            return []
         
+        results = []
         if subject_alternative_names:
-            for index , name in enumerate(subject_alternative_names):
-                if index > 15 : break
+            for index, name in enumerate(subject_alternative_names):
+                if index > 15: break
                 print(f"[+] {name}")
+                results.append(name)
         else:
             print("[-] No subject alternative names found.")
+        return results
