@@ -217,7 +217,7 @@ def generate_pdf_report(file_name,yara_results):
     if isinstance(creation_result, str) and "Error" in creation_result:
         print(colored(f"[-] Skipped PDF Creation Due to Error - {creation_result}", "red"))
     else:
-        print(colored("[+] Output Converted to a PDF Document - Document Found in 'Main Files' Directory", "green"))
+        print(colored("[+] Output Converted to a PDF Document - Document Found in 'reports' Directory", "green"))
 
 # Format YARA output
 def format_yara_output(yara_results):        
