@@ -142,9 +142,13 @@ To get started with **Morpheus IOC Scanner**, follow these steps:
     python3 morpheus_scan_v2.py --yara-scan --vt-scan -d "path/to/directory" --pdf
     ```
     > --yara-scan: for yara scanning
+
     > --vt-scan: for virus total scanning
+
     > -d: directory need to scan
+
     > --pdf: export scan result in pdf format
+    
     ***Note that --yara-scan and --vt-scan can be used seperately or combined with each other, --pdf is optional***
 
 ### Updating the YARA Database
