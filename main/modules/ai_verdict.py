@@ -90,7 +90,7 @@ class AIVerdict:
                 }
             ],
             # Utalizes a high paramater model for more accurate results
-            "model": "EleutherAI/gpt-j-6B",
+            #"model": "EleutherAI/gpt-j-6B",
             # This seed value ensures that the results are mostly deterministic
             "seed": 42
         }
