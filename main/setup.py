@@ -1,22 +1,3 @@
-"""
-Morpheus Setup Script
-Author: Phantom0004 (Daryl Gatt)
-
-Description:
-This script initializes the Morpheus malware analysis environment by managing 
-dependencies, directory structure, and YARA rule configuration. It supports 
-multiple installation types, including lightweight and comprehensive editions.
-
-Features:
-- Automated directory and dependency setup.
-- Repository cloning and YARA rule organization.
-- Version tracking for seamless updates.
-
-Usage:
-- Run the script to configure the environment and download required YARA rules.
-- Ensure sufficient permissions for directory creation and installations.
-"""
-
 import os
 import shutil
 import subprocess
@@ -137,7 +118,7 @@ def verify_git_installation():
             print("\nGit may not have been installed correctly, the program is unable to access the command. This may be due to a system error during installation.")
             sys.exit("[-] Install manually with this guide: 'https://git-scm.com/book/en/v2/Getting-Started-Installing-Git' to resolve this issue on your machine, or try again.")
         else:
-            # For windows machines, sometimes enviromental variables may fail, thus use full path
+            # For windows machines, sometimes environmental variables may fail, thus use full path
             global ABSOLUTE_PATH_FLAG
             ABSOLUTE_PATH_FLAG = True
             print("[!] Problem finding Git on system, will try to use absolute path. \n")
@@ -187,13 +168,13 @@ def create_and_traverse_directory(name):
     try:
         os.chdir(name)
     except Exception as err:
-        sys.exit(f"\nAn unidentified error has occured when traversing the directory : {err}")
+        sys.exit(f"\nAn unidentified error has occurred when traversing the directory : {err}")
 
 def create_yara_directories(): 
     global PROGRAM_MAIN_PATH
     
-    if "main files" not in os.getcwd().lower(): 
-        sys.exit("[-] Ensure you're in the '/Main Files' Morpheus directory before continuing! Program Aborted.") # Due to path issues
+    if "main" not in os.getcwd().lower(): 
+        sys.exit("[-] Ensure you're in the 'main' Morpheus directory before continuing! Program Aborted.") # Due to path issues
     else:
         PROGRAM_MAIN_PATH = os.getcwd() # Get main program directory
           
@@ -230,11 +211,17 @@ def find_and_extract_yara_files():
                 # If the file is a .yar or .yara file
                 if file_extension in [".yar", ".yara"]:
                     file_path = os.path.join(root, file)  # Full file path
+                    target_path = os.path.join(folder, file)
+                    # Avoid overwriting by appending a counter if file exists
+                    counter = 1
+                    while os.path.exists(target_path):
+                        base, ext = os.path.splitext(file)
+                        target_path = os.path.join(folder, f"{base}_{counter}{ext}")
+                        counter += 1
                     try:
-                        # Move the file to the immediate parent of its current folder
-                        shutil.move(file_path, folder)  # Move it to the main folder
+                        shutil.move(file_path, target_path)  # Move to unique path
                     except:
-                        pass # Ignore move
+                        pass # Ignore move errors
         
         # After extracting .yar/.yara files, remove all empty directories and non-YARA files
         for root, dirs, files in os.walk(folder, topdown=False):
@@ -324,14 +311,9 @@ WARNING: Modifying or deleting this file or the 'version_tracking' folder may ca
 If this file or the 'version_tracking' folder is accidentally deleted, please run 'setup.py' again to restore them.
                    """)
     
-# Handpicked from a large repository : https://github.com/InQuest/awesome-yara?tab=readme-ov-file
-# All links here will be reflected in the update python file
-
 def github_links_yara_rules():
     """
-    Read predefined yara repository lists to collect lastest rule
-    ex:
-    {'NanoShield': ['https://github.com/Neo23x0/signature-base.git', 'https://github.com/reversinglabs/reversinglabs-yara-rules', 'https://github.com/airbnb/binaryalert'], 'Fortress': ['https://github.com/Neo23x0/signature-base.git', 'https://github.com/reversinglabs/reversinglabs-yara-rules', 'https://github.com/airbnb/binaryalert', 'https://github.com/HydraDragonAntivirus/HydraDragonAntivirus', 'https://github.com/malpedia/signator-rules']}
+    Read predefined yara repository lists to collect latest rule
     """
     try:
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -375,8 +357,13 @@ def main():
 
     for index, link in enumerate(rule_links):
         print(f"\t\nCurrently Processing the following resource: {link}")
+        # Extract repo name and owner to create unique directory
+        repo_name = link.split("/")[-1].replace(".git", "")
+        owner = link.split("/")[-2]
+        unique_repo_name = f"{repo_name}_{owner}"
+        
         if os.name != "nt":
-            run_subprocess_command(f"git clone --depth 1 {link}")
+            run_subprocess_command(f"git clone --depth 1 {link} {unique_repo_name}")
         else:
             git_location = "git"
             if ABSOLUTE_PATH_FLAG is True:         
@@ -389,7 +376,7 @@ def main():
                 git_location = f'"{git_location}"' # Append quotation marks for path
                         
             # Install with access to the git command
-            run_subprocess_command(f'{git_location} clone --depth 1 {link}')
+            run_subprocess_command(f'{git_location} clone --depth 1 {link} {unique_repo_name}')
             
         print(f"[+] Installed {index+1}/{len(rule_links)} dependencies")
 

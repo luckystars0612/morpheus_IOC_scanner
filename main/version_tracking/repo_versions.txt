@@ -1,7 +1,7 @@
 Version History Logs -> Installation Type : Fortress Edition 
 
 UPDATE STATUS FOR - https://github.com/Neo23x0/signature-base.git 
-c43cdcca35c516f078b25eeb6d5849ecb9fc66f0	refs/heads/master
+2629b0371fe4ffe907d02fb33fda15297abb5cd4	refs/heads/master
 
 UPDATE STATUS FOR - https://github.com/reversinglabs/reversinglabs-yara-rules (No Master or Main Branch Found) 
 943f35fde8c30d8122b26783911213f8994cbf9a	refs/heads/develop
@@ -11,4 +11,136 @@ a9c0f06affc35e1f8e45bb77f835b92350c68a0b	refs/heads/master
 
 UPDATE STATUS FOR - https://github.com/malpedia/signator-rules 
 6558c417dcf07146b1309b6acde6be0aa96dea10	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/Yara-Rules/rules 
+0f93570194a80d2f2032869055808b0ddcdfb360	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/advanced-threat-research/Yara-Rules 
+1919562a59f190bda60c982424f6a24c542ee3e0	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/roadwy/DefenderYara 
+63fedb45b4243e50a3f85e9e4e3e45bb6f1a6b6f	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/Hestat/lw-yara 
+efd3cdaecae091357087fea6ecffded2eb6dba85	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/t4d/PhishingKit-Yara-Rules 
+cb13d506203b33d765a10e716252427b9dbbc611	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/intezer/yara-rules 
+856a8e54b05add87764ddc35a964423782e13558	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/fboldewin/YARA-rules 
+54e9e6899b258b72074b2b4db6909257683240c2	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/RussianPanda95/Yara-Rules 
+1ce9c0dec191b43d51ceb34234a12e63970b252c	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/ditekshen/detection 
+e76c93dcdedff04076380ffc60ea54e45b313635	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/embee-research/Yara-detection-rules 
+ac56d6f6fd2a30c8cb6e5c0455d6519210a8b0f4	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/tenable/yara-rules 
+e7e0a8947c3a798ee2f2b44f0c1b6fd0f8a0daba	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/mthcht/ThreatHunting-Keywords-yara-rules 
+b50a94d17e635b1fee631b32f3efa4731c759a04	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/0pc0deFR/YaraRules 
+c41cdd29e06657e593553ba4c665836659633f0b	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/naxonez/YaraRules 
+e226da1057b954de6f5b20b13109d299b404ff6b	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/MalGamy/YARA_Rules 
+1f538fcd5fe6d8aeec6c8a8394a785b69872b7a7	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/JPCERTCC/jpcert-yara 
+1b8b09eff1eaccd062993a31469158fdb5c34a06	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/InQuest/yara-rules-vt 
+589bbefc22847193cac455858fa15e627d671918	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/jas502n/cs_yara 
+b00aa257276c130607017160c591d44217266d76	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/The-DFIR-Report/Yara-Rules 
+b7d513e2eed3c00bb31cf420b6bf174cd2bbc8fe	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/deadbits/yara-rules 
+d002f7ecee23e09142a3ac3e79c84f71dda3f001	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/100DaysofYARA/2023 
+57f1eff7d183f8ffa4ec3b54c24f69da5e048cd4	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/thewhiteninja/yarasploit 
+1616a7338f54dfeeb5f437ada46283cf442a5f7a	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/100DaysofYARA/2024 
+10b162702cdbecb0752ee4cba6c5a3085d2cdcf9	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/100DaysofYARA/2025 
+cce9dd70054ad4c931033ebb99fb31577f9da263	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/100DaysofYARA/2022 
+99544bbecb332f8ade7304354be3d9e71789ce52	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/ail-project/ail-yara-rules 
+8e978d5e70084df6d2fae0727677ec4f60e3e639	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/curated-intel/Ukraine-Cyber-Operations 
+2303950cbf2881f7916a6791636a7296e2132555	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/hvs-consulting/ioc_signatures 
+51ed0337a54783b74896381aa4d6699f7268d7e3	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/AhmetPayaslioglu/YaraRules 
+c8a9567a064a6c1e8213b28d41c60452a62bd4e7	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/StrangerealIntel/Orion 
+0166b5fc1c00c979ac640e6ba51a2375ad6f5ef2	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/anyrun/YARA 
+5f92c2898d911bcbee4b5f95633f40cfe54789da	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/jeFF0Falltrades/YARA-Signatures 
+e2c07842d92b158573cc3e740eda8a231afd8dfe	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/mandiant/heyserial 
+78508ba5800b4c4f1f5ffdca01deb0402e8e37d1	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/deepfence/yara-rules 
+6cc3c18344570cef3530942c76916386aff3d011	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/dr4k0nia/yara-rules 
+4b10f9b79a4cfb3ec9cb5675f32cc7ee6885fbd8	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/ThreatLabz/iocs 
+e25e57c31cd22c936a2c89c3766995f8368aa938	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/h3x2b/yara-rules 
+0d5ecd4315ab5c816f29f6200e3bda6dfc88b6ed	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/stratosphereips/yara-rules 
+2a4033559beac61421bbf5192c320e415bde0287	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/rednaga/APKiD 
+8e8779c44bb466b2c78e9695055f44624c2f3e9c	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/google/threat-team 
+ae88ec81468e3cafc682c4a850c1e7b8929c7a7f	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/CofenseLabs/Coronavirus-Phishing-Yara-Rules 
+4390b10b69e0b70467b5f5b17e353f53a43f814e	refs/heads/master
+
+UPDATE STATUS FOR - https://github.com/S12cybersecurity/YaraRules 
+58a63e196bddc6f95cfb447504c64a694fd354ff	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/RustyNoob-619/YARA 
+4faf24f06cdf0dac331c64f59f984870fd4b8bf1	refs/heads/main
+
+UPDATE STATUS FOR - https://github.com/danafaye/WindowsAPIAbuseAtlas 
+c7d2d388e60536c383fed8ef4ea66adc96f4e7f8	refs/heads/main
 
